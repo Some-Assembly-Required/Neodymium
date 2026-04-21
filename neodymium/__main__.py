@@ -7,6 +7,18 @@ from dotenv import load_dotenv
 from . import scraper
 from .dbmanager.database_manager import DatabaseManager
 from .filestore import FileStore
+from .remote_filestore import HttpApiStore  # noqa: F401 — registers "http-api"
+
+
+def _make_filestore(root: str) -> FileStore:
+    store_name = os.environ.get("FILESTORE", "local")
+    store_cls = FileStore._REGISTRY.get(store_name)
+    if store_cls is None:
+        available = ", ".join(FileStore._REGISTRY)
+        raise ValueError(
+            f"Unknown FILESTORE '{store_name}'. Available: {available}"
+        )
+    return store_cls.from_env(root)
 
 
 def parse_args():
@@ -50,7 +62,8 @@ def main():
         port=int(os.environ["DB_PORT"]),
     )
 
-    fs = FileStore(str(args.output))
+    fs = _make_filestore(str(args.output))
+    print(f"Using filestore: {type(fs).__name__} at {args.output}")
 
     print(f"Chosen Scrapers: {args.scraper}")
     if "all" in args.scraper:
