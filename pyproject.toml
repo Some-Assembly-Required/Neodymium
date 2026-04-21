@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neodymium"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "beautifulsoup4",
+    "coloredlogs",
+    "requests",
+    "pydantic",
+    "pymongo",
+    "tqdm",
+    "python-dotenv",
+    "lxml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "types-requests",
+    "pre-commit",
+]
+
+[project.scripts]
+neodymium = "neodymium.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["neodymium*"]
