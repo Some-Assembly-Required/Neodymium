@@ -75,6 +75,15 @@ class LocalFileStore(FileStore):
 
         self.by_product_path.mkdir(parents=True, exist_ok=True)
 
+    def _dest_dir(self, firmware: Firmware) -> Path:
+        """
+        Return the directory under by-vendor/ where this firmware's symlink lives.
+        Override in a subclass to customise the layout.
+
+        Default: {by_vendor}/{vendor}/{product}/
+        """
+        return self.by_product_path / firmware.vendor / firmware.product
+
     def add(self, firmware: Firmware, path: str) -> bool:
         if firmware.checksum is None:
             self.logger.error(
@@ -96,7 +105,7 @@ class LocalFileStore(FileStore):
             self.logger.error(f"Firmware has no filename, cannot store: {firmware!r}")
             return False
 
-        product_dir = self.by_product_path / firmware.vendor / firmware.product
+        product_dir = self._dest_dir(firmware)
         product_dir.mkdir(parents=True, exist_ok=True)
         product_path = product_dir / firmware.filename
 
