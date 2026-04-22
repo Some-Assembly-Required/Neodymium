@@ -122,3 +122,13 @@ class Firmware(BaseModel):
             return False
 
         return True
+
+
+class FailedDownload(BaseModel):
+    """Records a firmware download that failed, for later retry."""
+
+    url: str
+    scraper: str
+    firmware: Firmware
+    failed_at: datetime = Field(default_factory=datetime.now)
+    attempts: int = 1
