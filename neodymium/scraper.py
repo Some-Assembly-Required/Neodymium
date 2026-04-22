@@ -301,6 +301,9 @@ class Scraper:
             self.temp_dir = temp_dir
             for fw, fw_path in self.scrape():
                 if self.dm.find_duplicate(fw):
+                    if self.fs is not None and not self.dry_run:
+                        if fw.calc_file_metadata(fw_path):
+                            self.fs.add(fw, fw_path)
                     continue
 
                 if not fw.calc_file_metadata(fw_path):
