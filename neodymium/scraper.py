@@ -283,9 +283,9 @@ class Scraper:
         self.dm = dm
         self.fs = fs
 
-    def log_failed_download(self, fw: Firmware, url: str) -> None:
+    def push_failed_download(self, fw: Firmware, url: str) -> None:
         """Record a failed download in the database for later retry."""
-        self.dm.log_failed_download(
+        self.dm.push_failed_download(
             FailedDownload(scraper=self.__class__.__name__, url=url, firmware=fw)
         )
 

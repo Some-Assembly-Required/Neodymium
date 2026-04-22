@@ -44,7 +44,7 @@ class DatabaseManager:
 
         return False
 
-    def log_failed_download(self, failed: FailedDownload) -> None:
+    def push_failed_download(self, failed: FailedDownload) -> None:
         """Upsert a failed download record, incrementing attempts on repeat failures."""
         self.failed_downloads.update_one(
             {"url": failed.url},
