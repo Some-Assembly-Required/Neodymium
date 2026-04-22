@@ -86,10 +86,8 @@ class LocalFileStore(FileStore):
             )
             return False
 
-        hash_dir = self._hash_store(firmware)
-        hash_dir.mkdir(parents=True, exist_ok=True)
-        store_path = hash_dir / firmware.checksum
-
+        store_path = self._hash_store(firmware)
+        store_path.mkdir(parents=True, exist_ok=True)
         # Copy if the file does not already exist; same hash == same content.
         if not store_path.exists():
             try:
