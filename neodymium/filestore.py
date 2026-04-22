@@ -11,8 +11,6 @@ from .firmware import Firmware
 
 coloredlogs.install(level="INFO")
 
-HEX_DIGITS = "0123456789abcdef"
-
 
 class FileStore(abc.ABC):
     """
@@ -49,16 +47,15 @@ class FileStore(abc.ABC):
 @FileStore.register("local")
 class LocalFileStore(FileStore):
     """
-    Stores firmware files by content hash with human-readable symlinks:
+    Stores firmware files per vendor, with a content-addressed hash store and
+    human-readable symlinks:
 
         {root}/
-          firmware/
-            {hex}/
+          {vendor}/
+            by-hash/
               {sha256}          ← real file, named by hash
-          by-vendor/
-            {vendor}/
-              {product}/
-                {filename}      → symlink to ../../firmware/{hex}/{sha256}
+            {product}/
+              {filename}        → symlink to ../by-hash/{sha256}
 
     Deduplication: if a file with the same SHA256 already exists the binary
     is not written again; only the symlink is created.
@@ -67,22 +64,20 @@ class LocalFileStore(FileStore):
     def __init__(self, root: str):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.root = Path(root)
-        self.filedata_path = self.root / "firmware"
-        self.by_product_path = self.root / "by-vendor"
+        self.root.mkdir(parents=True, exist_ok=True)
 
-        for digit in HEX_DIGITS:
-            (self.filedata_path / digit).mkdir(parents=True, exist_ok=True)
-
-        self.by_product_path.mkdir(parents=True, exist_ok=True)
+    def _hash_store(self, firmware: Firmware) -> Path:
+        """Directory where the content-addressed binary lives for this vendor."""
+        return self.root / firmware.vendor / "by-hash"
 
     def _dest_dir(self, firmware: Firmware) -> Path:
         """
-        Return the directory under by-vendor/ where this firmware's symlink lives.
+        Return the directory where this firmware's symlink lives.
         Override in a subclass to customise the layout.
 
-        Default: {by_vendor}/{vendor}/{product}/
+        Default: {root}/{vendor}/{product}/
         """
-        return self.by_product_path / firmware.vendor / firmware.product
+        return self.root / firmware.vendor / firmware.product
 
     def add(self, firmware: Firmware, path: str) -> bool:
         if firmware.checksum is None:
@@ -91,9 +86,11 @@ class LocalFileStore(FileStore):
             )
             return False
 
-        store_path = self.filedata_path / firmware.checksum[0] / firmware.checksum
-        
-        # Copy if the file does not already exist, since this is by hash, we know for sure if its a dup or not
+        hash_dir = self._hash_store(firmware)
+        hash_dir.mkdir(parents=True, exist_ok=True)
+        store_path = hash_dir / firmware.checksum
+
+        # Copy if the file does not already exist; same hash == same content.
         if not store_path.exists():
             try:
                 shutil.copy2(path, store_path)
