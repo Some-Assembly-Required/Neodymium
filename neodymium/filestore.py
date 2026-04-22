@@ -51,11 +51,15 @@ class LocalFileStore(FileStore):
     per-vendor human-readable symlinks:
 
         {root}/
-          by-hash/
-            {sha256}            ← real file, named by hash (shared across all vendors)
-          {vendor}/
-            {product}/
-              {filename}        → symlink to ../../by-hash/{sha256}
+            {vendor}/
+                by-hash/
+                    {sha256}  ← symlink to ../../firmware/{hex}/{sha256}
+                {product}/
+                    {filename} ← symlink to ../../firmware/{hex}/{sha256}
+            {firmware}/
+                {hex}/
+                    {sha256} ← real file, named by hash
+
 
     Deduplication: if a file with the same SHA256 already exists the binary
     is not written again; only the symlink is created.
