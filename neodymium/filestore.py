@@ -68,7 +68,7 @@ class LocalFileStore(FileStore):
 
     def _hash_store(self, firmware: Firmware) -> Path:
         """Directory where the content-addressed binary lives (shared across all vendors)."""
-        return self.root / "by-hash"
+        return self.root / "by-hash" / firmware.checksum[0] / firmware.checksum
 
     def _dest_dir(self, firmware: Firmware) -> Path:
         """
