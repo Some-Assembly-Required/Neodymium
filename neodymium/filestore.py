@@ -47,15 +47,15 @@ class FileStore(abc.ABC):
 @FileStore.register("local")
 class LocalFileStore(FileStore):
     """
-    Stores firmware files per vendor, with a content-addressed hash store and
-    human-readable symlinks:
+    Stores firmware files with a single shared content-addressed hash store and
+    per-vendor human-readable symlinks:
 
         {root}/
+          by-hash/
+            {sha256}            ← real file, named by hash (shared across all vendors)
           {vendor}/
-            by-hash/
-              {sha256}          ← real file, named by hash
             {product}/
-              {filename}        → symlink to ../by-hash/{sha256}
+              {filename}        → symlink to ../../by-hash/{sha256}
 
     Deduplication: if a file with the same SHA256 already exists the binary
     is not written again; only the symlink is created.
@@ -67,8 +67,8 @@ class LocalFileStore(FileStore):
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _hash_store(self, firmware: Firmware) -> Path:
-        """Directory where the content-addressed binary lives for this vendor."""
-        return self.root / firmware.vendor / "by-hash"
+        """Directory where the content-addressed binary lives (shared across all vendors)."""
+        return self.root / "by-hash"
 
     def _dest_dir(self, firmware: Firmware) -> Path:
         """
