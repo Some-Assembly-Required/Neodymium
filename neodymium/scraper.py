@@ -28,7 +28,7 @@ import bs4
 import lxml
 import tqdm
 
-from .firmware import Firmware
+from .firmware import Firmware, FailedDownload
 from .dbmanager.database_manager import DatabaseManager
 from .filestore import FileStore
 
@@ -282,6 +282,12 @@ class Scraper:
         self.temp_dir: Optional[str] = None
         self.dm = dm
         self.fs = fs
+
+    def log_failed_download(self, fw: Firmware, url: str) -> None:
+        """Record a failed download in the database for later retry."""
+        self.dm.log_failed_download(
+            FailedDownload(scraper=self.__class__.__name__, url=url, firmware=fw)
+        )
 
     def scrape(self) -> Generator[Tuple[Firmware, str], None, None]:
         """Yields a Tuple of a Firmware Object and a filepath to the downloaded firmware"""
