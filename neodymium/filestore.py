@@ -51,15 +51,12 @@ class LocalFileStore(FileStore):
     per-vendor human-readable symlinks:
 
         {root}/
-            {vendor}/
-                by-hash/
-                    {sha256}  ← symlink to ../../firmware/{hex}/{sha256}
-                {product}/
-                    {filename} ← symlink to ../../firmware/{hex}/{sha256}
-            {firmware}/
-                {hex}/
-                    {sha256} ← real file, named by hash
-
+          by-hash/
+            {hex}/
+              {sha256}          ← real file, named by hash (shared across all vendors)
+          {vendor}/
+            {product}/
+              {filename}        → symlink to ../../by-hash/{hex}/{sha256}
 
     Deduplication: if a file with the same SHA256 already exists the binary
     is not written again; only the symlink is created.
@@ -71,7 +68,7 @@ class LocalFileStore(FileStore):
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _hash_store(self, firmware: Firmware) -> Path:
-        """Directory where the content-addressed binary lives (shared across all vendors)."""
+        """Full path to the content-addressed binary (shared across all vendors)."""
         return self.root / "by-hash" / firmware.checksum[0] / firmware.checksum
 
     def _dest_dir(self, firmware: Firmware) -> Path:
@@ -91,7 +88,7 @@ class LocalFileStore(FileStore):
             return False
 
         store_path = self._hash_store(firmware)
-        store_path.mkdir(parents=True, exist_ok=True)
+        store_path.parent.mkdir(parents=True, exist_ok=True)
         # Copy if the file does not already exist; same hash == same content.
         if not store_path.exists():
             try:
