@@ -48,6 +48,11 @@ def parse_args():
         action="store_true",
         help="Scrape metadata without downloading files",
     )
+    parser.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="Retry previously failed downloads instead of running a full scrape",
+    )
 
     return parser.parse_args(), modules
 
@@ -76,6 +81,11 @@ def main():
             for s in scraper.Scraper.registry(modules)
             if s.__name__ in args.scraper
         ]
+
+    if args.retry_failed:
+        for s in scrapers:
+            s.retry_failed()
+        return
 
     curr_scrapers = {s: s.run(dry_run=args.dry_run) for s in scrapers}
     stopped = False

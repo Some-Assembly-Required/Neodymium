@@ -289,6 +289,62 @@ class Scraper:
             FailedDownload(scraper=self.__class__.__name__, url=url, firmware=fw)
         )
 
+    def _get_download_headers(self) -> Dict[str, str]:
+        """Return extra HTTP headers used when downloading firmware files.
+        Override in subclasses that require vendor-specific headers (e.g. Referer)."""
+        return {}
+
+    def retry_failed(self) -> None:
+        """Re-attempt all failed downloads recorded for this scraper."""
+        failed = self.dm.get_failed_downloads(scraper=self.__class__.__name__)
+        if not failed:
+            self.logger.info("No failed downloads to retry.")
+            return
+
+        self.logger.info(f"Retrying {len(failed)} failed download(s)...")
+        headers = self._get_download_headers()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for record in failed:
+                fw = record.firmware
+                url = record.url
+
+                fw_path: Optional[str] = None
+                for attempt in range(3):
+                    fw_path = self.http_download(
+                        url,
+                        directory=temp_dir,
+                        filename=fw.filename,
+                        headers=headers,
+                        logger=self.logger,
+                    )
+                    if fw_path:
+                        break
+                    if attempt < 2:
+                        delay = 2 ** (attempt + 1)
+                        self.logger.warning(
+                            f"Retry attempt {attempt + 1}/3 failed, waiting {delay}s: {url}"
+                        )
+                        time.sleep(delay)
+
+                if not fw_path:
+                    self.logger.error(f"Still failing after 3 attempts: {url}")
+                    self.push_failed_download(fw, url)  # increments attempts counter
+                    continue
+
+                if not fw.calc_file_metadata(fw_path):
+                    self.logger.error(f"Failed to read retried file: {fw_path}")
+                    continue
+
+                if self.fs is not None:
+                    self.fs.add(fw, fw_path)
+
+                if not self.dm.find_duplicate(fw):
+                    self.dm.add_firmware(fw)
+
+                self.dm.clear_failed_download(url)
+                self.logger.info(f"Retry succeeded: {fw.version}")
+
     def scrape(self) -> Generator[Tuple[Firmware, str], None, None]:
         """Yields a Tuple of a Firmware Object and a filepath to the downloaded firmware"""
         raise NotImplementedError
