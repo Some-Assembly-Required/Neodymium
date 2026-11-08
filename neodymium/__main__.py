@@ -15,9 +15,7 @@ def _make_filestore(root: str) -> FileStore:
     store_cls = FileStore._REGISTRY.get(store_name)
     if store_cls is None:
         available = ", ".join(FileStore._REGISTRY)
-        raise ValueError(
-            f"Unknown FILESTORE '{store_name}'. Available: {available}"
-        )
+        raise ValueError(f"Unknown FILESTORE '{store_name}'. Available: {available}")
     return store_cls.from_env(root)
 
 
@@ -89,8 +87,8 @@ def main():
 
     curr_scrapers = {s: s.run(dry_run=args.dry_run) for s in scrapers}
     stopped = False
-    finished = list()
-    errored = dict()
+    finished = []
+    errored = {}
     while len(curr_scrapers) > 0 and not stopped:
         to_remove = []
         for instance, scrape in curr_scrapers.items():

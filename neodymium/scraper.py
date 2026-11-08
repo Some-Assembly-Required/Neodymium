@@ -1,36 +1,31 @@
 from __future__ import annotations
 
-import os
-import logging
+import contextlib
 import datetime
-import tempfile
-import time
 import importlib
 import importlib.util
+import logging
+import os
 import pkgutil
 import sys
+import tempfile
+import time
 import types
+from collections.abc import Generator
 from pathlib import Path
 from urllib.parse import urlparse
-from typing import Generator
-from typing import Optional
-from typing import Tuple
-from typing import Dict
-from typing import List
-from typing import Type
 
-
+import bs4
 import coloredlogs
+import lxml.etree
 
 # TODO Type ignore here because there's a bug with requests (https://github.com/python/mypy/issues/16400)
 import requests  # type: ignore[import-untyped]
-import bs4
-import lxml
 import tqdm
 
-from .firmware import Firmware, FailedDownload
 from .dbmanager.database_manager import DatabaseManager
 from .filestore import FileStore
+from .firmware import FailedDownload, Firmware
 
 coloredlogs.install(level="INFO")
 
@@ -51,20 +46,20 @@ class UnhealthyScraper(Exception):
 class Scraper:
     """Base Scraper Class for a particular website/server/endpoint"""
 
-    _REGISTRY: List[Type[Scraper]] = list()
+    _REGISTRY: list[type[Scraper]] = []
 
     @staticmethod
     def http_download(
         url: str,
-        directory: Optional[str] = None,
-        filename: Optional[str] = None,
+        directory: str | None = None,
+        filename: str | None = None,
         dry_run: bool = False,
         ok_400: bool = False,
         ok_500: bool = False,
-        logger: Optional[logging.Logger] = None,
-        headers: Optional[Dict[str, str]] = None,
+        logger: logging.Logger | None = None,
+        headers: dict[str, str] | None = None,
         timeout: int = 60,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Download a file via http and returns the filepath it was downloaded to"""
         if filename is None:
             parsed_url = urlparse(url)
@@ -81,7 +76,7 @@ class Scraper:
             return filepath
 
         if headers is None:
-            headers = dict()
+            headers = {}
         # By Default, set User Agent to something thats not pythons' request (since that is frequently checked)
         if "User-Agent" not in headers:
             headers["User-Agent"] = DEFAULT_USERAGENT
@@ -124,10 +119,8 @@ class Scraper:
                     f"Download interrupted ({type(e).__name__}): {url} — {e}"
                 )
             # Remove the partial file so a retry starts fresh
-            try:
+            with contextlib.suppress(OSError):
                 os.remove(filepath)
-            except OSError:
-                pass
             return None
 
         return filepath
@@ -137,11 +130,11 @@ class Scraper:
         url: str,
         ok_400: bool = False,
         ok_500: bool = False,
-        logger: Optional[logging.Logger] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> Optional[str]:
+        logger: logging.Logger | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> str | None:
         if headers is None:
-            headers = dict()
+            headers = {}
         # By Default, set User Agent to something thats not pythons' request (since that is frequently checked)
         if "User-Agent" not in headers:
             headers["User-Agent"] = DEFAULT_USERAGENT
@@ -159,7 +152,7 @@ class Scraper:
         ):
             try:
                 res.raise_for_status()
-            except:
+            except requests.exceptions.HTTPError:
                 if logger:
                     logger.warning(f"Request Failed - Status Code: {res.status_code}")
                 return None
@@ -170,9 +163,9 @@ class Scraper:
         url: str,
         ok_400: bool = False,
         ok_500: bool = False,
-        logger: Optional[logging.Logger] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> Optional[bs4.BeautifulSoup]:
+        logger: logging.Logger | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> bs4.BeautifulSoup | None:
         """Performs a GET reqest against `url` and returns a BeautifulSoup object wrapping it"""
         html = Scraper.get_html(
             url, ok_400=ok_400, ok_500=ok_500, logger=logger, headers=headers
@@ -187,9 +180,9 @@ class Scraper:
         url: str,
         ok_400: bool = False,
         ok_500: bool = False,
-        logger: Optional[logging.Logger] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> Optional[lxml.etree._Element]:
+        logger: logging.Logger | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> lxml.etree._Element | None:
         html = Scraper.get_html(
             url, ok_400=ok_400, ok_500=ok_500, logger=logger, headers=headers
         )
@@ -199,7 +192,7 @@ class Scraper:
         return lxml.etree.HTML(html)
 
     @classmethod
-    def _load_module_from_path(cls, path: Path) -> Optional[types.ModuleType]:
+    def _load_module_from_path(cls, path: Path) -> types.ModuleType | None:
         """Load a Python file or package from a filesystem path."""
         path = Path(path)
         if not path.exists():
@@ -225,13 +218,13 @@ class Scraper:
 
     @classmethod
     def registry(
-        cls, additional_modules: List[Path] | None = None
-    ) -> Optional[List[Type[Scraper]]]:
+        cls, additional_modules: list[Path] | None = None
+    ) -> list[type[Scraper]] | None:
         # The registry is populated on each subclassing of Scraper via __init_subclass__().
         # This only occurs if any of the given subclasses are imported. So here, we
         # explicitly import all Scrapers so the registry is populated correctly
         if cls is not Scraper:
-            print(f"registry() is only invokable from the Scraper class")
+            print("registry() is only invokable from the Scraper class")
             return None
 
         modules_to_load = ["neodymium.scrapers"] + (additional_modules or [])
@@ -269,7 +262,7 @@ class Scraper:
         self,
         base_url: str,
         dm: DatabaseManager,
-        fs: Optional[FileStore] = None,
+        fs: FileStore | None = None,
         timeout: int = 0,
         log_level: int = logging.INFO,
     ):
@@ -279,7 +272,7 @@ class Scraper:
         self.min_wait_s: float = 3  # Minimum wait time between downloads (seconds)
         self.dry_run: bool = False
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.temp_dir: Optional[str] = None
+        self.temp_dir: str | None = None
         self.dm = dm
         self.fs = fs
 
@@ -289,7 +282,7 @@ class Scraper:
             FailedDownload(scraper=self.__class__.__name__, url=url, firmware=fw)
         )
 
-    def _get_download_headers(self) -> Dict[str, str]:
+    def _get_download_headers(self) -> dict[str, str]:
         """Return extra HTTP headers used when downloading firmware files.
         Override in subclasses that require vendor-specific headers (e.g. Referer)."""
         return {}
@@ -309,7 +302,7 @@ class Scraper:
                 fw = record.firmware
                 url = record.url
 
-                fw_path: Optional[str] = None
+                fw_path: str | None = None
                 for attempt in range(3):
                     fw_path = self.http_download(
                         url,
@@ -345,11 +338,11 @@ class Scraper:
                 self.dm.clear_failed_download(url)
                 self.logger.info(f"Retry succeeded: {fw.version}")
 
-    def scrape(self) -> Generator[Tuple[Firmware, str], None, None]:
+    def scrape(self) -> Generator[tuple[Firmware, str], None, None]:
         """Yields a Tuple of a Firmware Object and a filepath to the downloaded firmware"""
         raise NotImplementedError
 
-    def run(self, dry_run: bool = False) -> Generator[Tuple[Firmware, str], None, None]:
+    def run(self, dry_run: bool = False) -> Generator[tuple[Firmware, str], None, None]:
         self.logger.info(f"Starting {self.__class__.__name__} Scraper")
         self.dry_run = dry_run
         if self.dry_run:
@@ -363,9 +356,12 @@ class Scraper:
             self.temp_dir = temp_dir
             for fw, fw_path in self.scrape():
                 if self.dm.find_duplicate(fw):
-                    if self.fs is not None and not self.dry_run:
-                        if fw.calc_file_metadata(fw_path):
-                            self.fs.add(fw, fw_path)
+                    if (
+                        self.fs is not None
+                        and not self.dry_run
+                        and fw.calc_file_metadata(fw_path)
+                    ):
+                        self.fs.add(fw, fw_path)
                     continue
 
                 if not fw.calc_file_metadata(fw_path):

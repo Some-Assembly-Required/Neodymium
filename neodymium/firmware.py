@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field, field_serializer
-from typing import Optional, Set
+import hashlib
 from datetime import datetime
 from enum import Enum
-import hashlib
+
+from pydantic import BaseModel, Field, field_serializer
 
 
 # Add to this Enum as needed
@@ -46,53 +46,52 @@ class Firmware(BaseModel):
     vendor: str = Field(description="Firmware vendor/manufacturer")
     product: str = Field(description="product name")
     version: str = Field(description="Software/Firmware version")
-    hw_rev: Optional[str] = Field(None, description="Hardware revision/version")
-    extra: Optional[dict] = Field(
-        None, description="Scraper-specific metadata that does not belong in the universal schema"
+    hw_rev: str | None = Field(None, description="Hardware revision/version")
+    extra: dict | None = Field(
+        None,
+        description="Scraper-specific metadata that does not belong in the universal schema",
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
         description="Description of the firmware or product. Usually this is the product description or any useful details",
     )
-    upload_date: Optional[datetime] = Field(
+    upload_date: datetime | None = Field(
         None,
         description="When this firmware was published or uploaded to the website it was scraped from",
     )
-    region: Optional[str] = Field(
+    region: str | None = Field(
         None,
         description='The region in the world this firmware is intended to run in. Ideally use ISO3166-1 alpha2 (2 char country code) for a country or "Global" if its specifically for all regions',
     )
-    filename: Optional[str] = Field(None, description="firmware filename")
+    filename: str | None = Field(None, description="firmware filename")
 
     # Scraping Notes
-    download_date: Optional[datetime] = Field(
+    download_date: datetime | None = Field(
         None, description="When this particular file was downloaded"
     )
-    url: Optional[str] = Field(
+    url: str | None = Field(
         None, description="The URL that this firmware was downloaded from"
     )
-    dynamic_url: Optional[bool] = Field(
+    dynamic_url: bool | None = Field(
         None,
         description="Whether or not the download URL is a dynamically generated/empheral URL",
     )
-    notes: Optional[str] = Field(None, description="Notes about the scrape itself")
+    notes: str | None = Field(None, description="Notes about the scrape itself")
 
     # Calculated values
-    file_size: Optional[int] = Field(
-        None, description="Firmware file size in bytes", ge=0
-    )
-    checksum: Optional[str] = Field(None, description="Firmware checksum hexdigest")
-    checksum_type: Optional[str] = Field(
+    file_size: int | None = Field(None, description="Firmware file size in bytes", ge=0)
+    checksum: str | None = Field(None, description="Firmware checksum hexdigest")
+    checksum_type: str | None = Field(
         None, description="Type of checksum (MD5, SHA256, etc.)"
     )
 
     # Additional metadata
-    tags: Optional[Set[Tags]] = Field(
+    tags: set[Tags] | None = Field(
         default_factory=set, description="Tags for categorization"
     )
 
     @field_serializer("tags")
-    def serialize_tags(self, tags: Optional[Set[Tags]]) -> Optional[list]:
+    def serialize_tags(self, tags: set[Tags] | None) -> list | None:
         if tags is None:
             return None
         return list(tags)
