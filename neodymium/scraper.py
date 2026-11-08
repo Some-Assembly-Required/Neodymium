@@ -18,9 +18,7 @@ from urllib.parse import urlparse
 import bs4
 import coloredlogs
 import lxml.etree
-
-# TODO Type ignore here because there's a bug with requests (https://github.com/python/mypy/issues/16400)
-import requests  # type: ignore[import-untyped]
+import requests
 import tqdm
 
 from .dbmanager.database_manager import DatabaseManager
