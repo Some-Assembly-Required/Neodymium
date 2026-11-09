@@ -29,6 +29,8 @@ dev = [
     # Test framework and the fake-vendor fixture server.
     "pytest",
     "flask",
+    # Builds the wheel (see the `build` just recipe).
+    "build",
 ]
 
 [project.scripts]

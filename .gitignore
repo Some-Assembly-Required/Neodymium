@@ -6,3 +6,5 @@ docker/mongodb_data/
 .env
 *.egg-info/
 output/
+build/
+dist/
