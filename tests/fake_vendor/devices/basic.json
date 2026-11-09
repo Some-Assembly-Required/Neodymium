@@ -1,0 +1,56 @@
+{
+  "_comment": "Fake devices for the /basic/ static site. Credentials for every gated device are admin/secret. The four devices cover the full page/file auth matrix.",
+  "devices": [
+    {
+      "vendor": "Acme Networks",
+      "product": "AcmeRouter 3000",
+      "version": "1.0.0",
+      "hw_rev": "v2",
+      "region": "Global",
+      "upload_date": "2024-01-15",
+      "filename": "acme-3000-v1.0.0.bin",
+      "description": "Public router firmware, no authentication required.",
+      "tags": ["Router"],
+      "extra": {"channel": "stable"},
+      "content": "ACME-3000 FIRMWARE v1.0.0 :: public/public"
+    },
+    {
+      "vendor": "Beacon Systems",
+      "product": "BeaconAP X1",
+      "version": "2.3.1",
+      "hw_rev": "rev-c",
+      "region": "US",
+      "upload_date": "2024-03-02",
+      "filename": "beacon-x1-2.3.1.img",
+      "description": "Access point firmware; product page is gated, file is public.",
+      "tags": ["Access Point"],
+      "content": "BEACON-X1 FIRMWARE v2.3.1 :: gated-page/public-file",
+      "auth": {"type": "basic", "username": "admin", "password": "secret", "protect": ["page"]}
+    },
+    {
+      "vendor": "Cobalt Devices",
+      "product": "CobaltModem 500",
+      "version": "4.0.7",
+      "region": "EU",
+      "upload_date": "2024-05-20",
+      "filename": "cobalt-500-4.0.7.fw",
+      "description": "Modem firmware; product page is public, file download is gated.",
+      "tags": ["Modem"],
+      "content": "COBALT-500 FIRMWARE v4.0.7 :: public-page/gated-file",
+      "auth": {"type": "basic", "username": "admin", "password": "secret", "protect": ["file"]}
+    },
+    {
+      "vendor": "Delta IoT",
+      "product": "DeltaCam 7",
+      "version": "0.9.12",
+      "hw_rev": "A1",
+      "region": "Global",
+      "upload_date": "2024-07-08",
+      "filename": "deltacam7-0.9.12.bin",
+      "description": "Camera firmware; both the product page and the file are gated.",
+      "tags": ["Camera", "IoT"],
+      "size_bytes": 4096,
+      "auth": {"type": "basic", "username": "admin", "password": "secret", "protect": ["page", "file"]}
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+# Ephemeral, RAM-backed MongoDB for the test suite.
+#
+# Nothing is persisted: /data/db is a tmpfs mount, so the WiredTiger storage
+# engine writes into RAM and everything is discarded the moment the container
+# stops. (MongoDB's dedicated `inMemory` storage engine is Enterprise-only, so
+# tmpfs is the portable way to get a RAM-backed DB on the Community image.)
+#
+# Usage:
+#   docker compose -f tests/docker-compose.yml up -d     # start
+#   docker compose -f tests/docker-compose.yml down      # stop + discard data
+services:
+  mongodb:
+    image: mongo:7.0
+    # No restart policy: this is a throwaway test fixture, not a service.
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-example}
+    ports:
+      - "${DB_PORT:-27017}:27017"
+    # RAM-backed storage: tmpfs lives in memory and never touches disk.
+    tmpfs:
+      - /data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 5s

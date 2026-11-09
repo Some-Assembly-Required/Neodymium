@@ -26,6 +26,9 @@ dev = [
     "types-tqdm",
     "lxml-stubs",
     "pre-commit",
+    # Test framework and the fake-vendor fixture server.
+    "pytest",
+    "flask",
 ]
 
 [project.scripts]
@@ -33,6 +36,10 @@ neodymium = "neodymium.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["neodymium*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
 
 [tool.ruff]
 target-version = "py310"

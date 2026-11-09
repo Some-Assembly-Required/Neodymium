@@ -198,6 +198,14 @@ class Scraper:
             return None
 
         module_name = path.stem
+        # Mirror importlib's module caching: if this plugin is already loaded,
+        # return it instead of re-executing the file. Re-execution re-runs the
+        # module (including `class X(Scraper)`), which would register the scraper
+        # again via __init_subclass__ and make registry() non-idempotent.
+        cached = sys.modules.get(module_name)
+        if cached is not None:
+            return cached
+
         spec = importlib.util.spec_from_file_location(
             module_name, path / "__init__.py" if path.is_dir() else path
         )

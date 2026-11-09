@@ -22,3 +22,15 @@ lint:
 # Format code with ruff
 fmt:
     ruff format .
+
+# Run the test suite (spins up / tears down the ephemeral Mongo automatically)
+test *args:
+    pytest {{args}}
+
+# Run the fake-vendor fixture webserver (e.g. `just test-server --port 8000`)
+test-server *args:
+    python -m tests.fake_vendor {{args}}
+
+# Run the ephemeral, RAM-backed MongoDB used by the tests (Ctrl+C to stop)
+test-mongo *args:
+    docker compose -f tests/docker-compose.yml up {{args}}
