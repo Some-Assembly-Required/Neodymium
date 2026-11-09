@@ -58,7 +58,7 @@ build:
 clean:
     rm -rf build/ dist/
 
-# Start the database via docker compose
+# Start the database via docker compose (e.g. `just database -d` to run detached)
 [group('deployment')]
-database:
-    docker compose --env-file .env -f docker/docker-compose.yml up
+database *args:
+    docker compose --env-file .env -f docker/docker-compose.yml up {{args}}
