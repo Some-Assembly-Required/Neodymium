@@ -73,6 +73,7 @@ class Scraper:
         logger: logging.Logger | None = None,
         headers: dict[str, str] | None = None,
         timeout: int = 60,
+        auth: tuple[str, str] | None = None,
     ) -> str | None:
         """Download a file via http and returns the filepath it was downloaded to"""
         if filename is None:
@@ -96,7 +97,9 @@ class Scraper:
             headers["User-Agent"] = DEFAULT_USERAGENT
 
         try:
-            res = requests.get(url, stream=True, headers=headers, timeout=timeout)
+            res = requests.get(
+                url, stream=True, headers=headers, timeout=timeout, auth=auth
+            )
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
             if logger:
                 logger.warning(f"Failed to connect to {url}")
