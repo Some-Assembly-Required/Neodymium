@@ -362,6 +362,8 @@ class Scraper:
                     self.logger.error(f"Failed to read retried file: {fw_path}")
                     continue
 
+                fw.set_dl_now()
+
                 if self.fs is not None:
                     self.fs.add(fw, fw_path)
 
@@ -417,6 +419,8 @@ class Scraper:
                 if not fw.calc_file_metadata(fw_path):
                     self.logger.error(f"Failed to read file: {fw_path}")
                     continue
+
+                fw.set_dl_now()
 
                 last_dl = self._throttle(last_dl)
 
