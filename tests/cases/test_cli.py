@@ -20,11 +20,12 @@ from tests.fake_vendor.loader import Device
 # The scraper plugin file the CLI is pointed at.
 PLUGIN = Path(__file__).resolve().parents[1] / "scrapers" / "basic_scraper.py"
 
+# Passed to the CLI subprocess; must match tests/docker-compose.yml.
 MONGO_ENV = {
-    "DB_USERNAME": os.environ.get("DB_USERNAME", "root"),
-    "DB_PASSWORD": os.environ.get("DB_PASSWORD", "example"),
-    "DB_HOST": os.environ.get("DB_HOST", "localhost"),
-    "DB_PORT": os.environ.get("DB_PORT", "27017"),
+    "DB_USERNAME": "root",
+    "DB_PASSWORD": "example",
+    "DB_HOST": "localhost",
+    "DB_PORT": "27017",
 }
 
 

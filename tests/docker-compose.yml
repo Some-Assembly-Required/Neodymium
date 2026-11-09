@@ -13,10 +13,10 @@ services:
     image: mongo:7.0
     # No restart policy: this is a throwaway test fixture, not a service.
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME:-root}
-      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-example}
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
     ports:
-      - "${DB_PORT:-27017}:27017"
+      - "27017:27017"
     # RAM-backed storage: tmpfs lives in memory and never touches disk.
     tmpfs:
       - /data/db

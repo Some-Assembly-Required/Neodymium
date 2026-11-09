@@ -17,11 +17,11 @@ from tests.fake_vendor.loader import Device, load_devices
 
 COMPOSE_FILE = Path(__file__).parent / "docker-compose.yml"
 
-# Connection params default to the fixture docker-compose defaults.
-MONGO_USER = os.environ.get("DB_USERNAME", "root")
-MONGO_PASS = os.environ.get("DB_PASSWORD", "example")
-MONGO_HOST = os.environ.get("DB_HOST", "localhost")
-MONGO_PORT = int(os.environ.get("DB_PORT", "27017"))
+# Credentials for the ephemeral test Mongo; must match tests/docker-compose.yml.
+MONGO_USER = "root"
+MONGO_PASS = "example"
+MONGO_HOST = "localhost"
+MONGO_PORT = 27017
 
 # Escape hatch: when set, assume Mongo is already running (CI / a dev loop) and
 # don't manage the docker-compose lifecycle here.
