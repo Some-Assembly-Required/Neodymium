@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ device.vendor }} {{ device.product }} {{ device.version }}</title>
+</head>
+<body>
+  <article class="firmware"
+           data-vendor="{{ device.vendor }}"
+           data-product="{{ device.product }}"
+           data-version="{{ device.version }}"
+           data-hw-rev="{{ device.hw_rev or '' }}"
+           data-region="{{ device.region or '' }}"
+           data-upload-date="{{ device.upload_date or '' }}"
+           data-filename="{{ device.filename }}"
+           data-tags="{{ device.tags | join(',') }}">
+    <h1>{{ device.vendor }} {{ device.product }}</h1>
+    <p class="version">Version: {{ device.version }}</p>
+    {% if device.hw_rev %}<p class="hw-rev">Hardware: {{ device.hw_rev }}</p>{% endif %}
+    {% if device.region %}<p class="region">Region: {{ device.region }}</p>{% endif %}
+    {% if device.description %}<p class="description">{{ device.description }}</p>{% endif %}
+    <ul class="tags">
+      {% for tag in device.tags %}<li class="tag">{{ tag }}</li>{% endfor %}
+    </ul>
+    <a class="download" href="{{ download_url }}">{{ device.filename }}</a>
+  </article>
+</body>
+</html>

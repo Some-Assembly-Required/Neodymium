@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fake Vendor — Firmware Downloads</title>
+</head>
+<body>
+  <h1>Firmware Downloads</h1>
+  <ul id="device-list">
+    {% for device in devices %}
+    <li>
+      <a class="device-link"
+         href="{{ url_for('basic.device_page', slug=device.slug) }}">
+        {{ device.vendor }} {{ device.product }} {{ device.version }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</body>
+</html>

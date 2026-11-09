@@ -2,7 +2,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import coloredlogs
 import requests
@@ -32,7 +31,7 @@ class HttpApiStore(LocalFileStore):
 
     _UPLOAD_PATH = "/firmware"
 
-    def __init__(self, root: str, remote_url: str, api_key: Optional[str] = None):
+    def __init__(self, root: str, remote_url: str, api_key: str | None = None):
         super().__init__(root)
         self.remote_url = remote_url.rstrip("/")
         self.logger = logging.getLogger(self.__class__.__name__)

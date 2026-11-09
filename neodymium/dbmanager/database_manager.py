@@ -1,9 +1,10 @@
-import coloredlogs, logging
-from typing import List, Optional
+import logging
+from typing import Any
 
+import coloredlogs
 from pymongo import MongoClient
 
-from neodymium.firmware import Firmware, FailedDownload
+from neodymium.firmware import FailedDownload, Firmware
 
 logger = logging.getLogger(__file__)
 coloredlogs.install(level="INFO")
@@ -23,7 +24,7 @@ class DatabaseManager:
         self.password = password
         self.host = host
         self.port = port
-        self.client = MongoClient(
+        self.client: MongoClient[dict[str, Any]] = MongoClient(
             f"mongodb://{self.username}:{self.password}@{self.host}:{self.port}/"
         )
         self.db = self.client["firmware-database"]
@@ -34,15 +35,12 @@ class DatabaseManager:
     def add_firmware(self, firmware_metadata: Firmware):
 
         firmware = self.db.firmware
-        firmware.insert_one(firmware_metadata.model_dump()).inserted_id
+        firmware.insert_one(firmware_metadata.model_dump())
 
     def check_url(self, firmware_url: str):
 
         url_exists = self.collection.find_one({"url": firmware_url})
-        if url_exists:
-            return True
-
-        return False
+        return bool(url_exists)
 
     def push_failed_download(self, failed: FailedDownload) -> None:
         """Upsert a failed download record, incrementing attempts on repeat failures."""
@@ -59,7 +57,7 @@ class DatabaseManager:
             upsert=True,
         )
 
-    def get_failed_downloads(self, scraper: Optional[str] = None) -> List[FailedDownload]:
+    def get_failed_downloads(self, scraper: str | None = None) -> list[FailedDownload]:
         """Return all failed downloads, optionally filtered by scraper name."""
         query = {"scraper": scraper} if scraper else {}
         return [

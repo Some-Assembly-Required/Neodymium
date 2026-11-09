@@ -19,8 +19,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "mypy==2.4.1",
+    "ruff",
     "types-requests",
+    "types-beautifulsoup4",
+    "types-tqdm",
+    "lxml-stubs",
     "pre-commit",
+    # Test framework and the fake-vendor fixture server.
+    "pytest",
+    "flask",
 ]
 
 [project.scripts]
@@ -28,3 +36,32 @@ neodymium = "neodymium.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["neodymium*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+# A standard, widely-used rule set. Ruff's formatter owns formatting, so no
+# formatting-only lint rules here.
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+# The formatter owns line length and intentionally won't split long strings,
+# so E501 is disabled per Ruff's formatter guidance.
+ignore = ["E501"]
+
+# coloredlogs ships no type stubs and has no package on typeshed.
+[[tool.mypy.overrides]]
+module = "coloredlogs"
+ignore_missing_imports = true

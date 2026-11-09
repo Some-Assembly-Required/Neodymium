@@ -3,7 +3,6 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Type
 
 import coloredlogs
 
@@ -20,14 +19,19 @@ class FileStore(abc.ABC):
     via the FILESTORE environment variable (default: "local").
     """
 
-    _REGISTRY: dict[str, Type["FileStore"]] = {}
+    _REGISTRY: dict[str, type["FileStore"]] = {}
+
+    def __init__(self, root: str) -> None:
+        self.root = Path(root)
 
     @classmethod
     def register(cls, name: str):
         """Class decorator that registers a FileStore implementation by name."""
-        def decorator(subclass: Type["FileStore"]) -> Type["FileStore"]:
+
+        def decorator(subclass: type["FileStore"]) -> type["FileStore"]:
             cls._REGISTRY[name] = subclass
             return subclass
+
         return decorator
 
     @classmethod
@@ -69,6 +73,10 @@ class LocalFileStore(FileStore):
 
     def _hash_store(self, firmware: Firmware) -> Path:
         """Full path to the content-addressed binary (shared across all vendors)."""
+        if firmware.checksum is None:
+            raise ValueError(
+                f"Firmware.checksum is not set; call calc_file_metadata() first: {firmware!r}"
+            )
         return self.root / "by-hash" / firmware.checksum[0] / firmware.checksum
 
     def _dest_dir(self, firmware: Firmware) -> Path:
