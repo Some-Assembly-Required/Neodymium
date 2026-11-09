@@ -41,10 +41,26 @@ class UnhealthyScraper(Exception):
     pass
 
 
+class _Skip:
+    """Type of ``Scraper.SKIP``, the failed-download sentinel."""
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "Scraper.SKIP"
+
+
+# A successful (Firmware, filepath), or SKIP for a failed/skipped download.
+ScrapeYield = tuple[Firmware, str] | _Skip
+
+
 class Scraper:
     """Base Scraper Class for a particular website/server/endpoint"""
 
     _REGISTRY: list[type[Scraper]] = []
+
+    #: Yield this from ``scrape()`` on a failed/skipped download (see ``_Skip``).
+    SKIP: _Skip = _Skip()
 
     @staticmethod
     def http_download(
@@ -122,6 +138,19 @@ class Scraper:
             return None
 
         return filepath
+
+    @staticmethod
+    def google_drive_quota_exceeded(filepath: str) -> bool | None:
+        """Return True if a downloaded Google Drive file is actually the
+        "Quota exceeded" HTML page, False if it looks like a real file, or
+        None if the file could not be read."""
+        try:
+            with open(filepath, "rb") as f:
+                # len("<!DOCTYPE html><html><head><title>Google Drive - Quota exceeded") => 63
+                start = f.read(63)
+                return b"Google Drive - Quota exceeded" in start
+        except OSError:
+            return None
 
     @staticmethod
     def get_html(
@@ -342,11 +371,20 @@ class Scraper:
                 self.dm.clear_failed_download(url)
                 self.logger.info(f"Retry succeeded: {fw.version}")
 
-    def scrape(self) -> Generator[tuple[Firmware, str], None, None]:
-        """Yields a Tuple of a Firmware Object and a filepath to the downloaded firmware"""
+    def scrape(self) -> Generator[ScrapeYield, None, None]:
+        """Yield ``(Firmware, filepath)`` per successful download, or ``Scraper.SKIP``
+        on a failed/skipped one so throttling and interleaving still run. Never yield
+        a tuple for a failure — ``run()`` would store it as real firmware."""
         raise NotImplementedError
 
-    def run(self, dry_run: bool = False) -> Generator[tuple[Firmware, str], None, None]:
+    def _throttle(self, last_dl: datetime.datetime) -> datetime.datetime:
+        """Block so attempts are >= ``min_wait_s`` apart; return the new reference time."""
+        delta_t = (datetime.datetime.now() - last_dl).total_seconds()
+        if delta_t < self.min_wait_s:
+            time.sleep(self.min_wait_s - delta_t)
+        return datetime.datetime.now()
+
+    def run(self, dry_run: bool = False) -> Generator[ScrapeYield, None, None]:
         self.logger.info(f"Starting {self.__class__.__name__} Scraper")
         self.dry_run = dry_run
         if self.dry_run:
@@ -358,7 +396,15 @@ class Scraper:
         last_dl = start_time
         with tempfile.TemporaryDirectory() as temp_dir:
             self.temp_dir = temp_dir
-            for fw, fw_path in self.scrape():
+            for item in self.scrape():
+                if isinstance(item, _Skip):
+                    # Failed/skipped download: pace it and yield so other
+                    # scrapers get a turn, but store/record nothing.
+                    last_dl = self._throttle(last_dl)
+                    yield item
+                    continue
+
+                fw, fw_path = item
                 if self.dm.find_duplicate(fw):
                     if (
                         self.fs is not None
@@ -372,11 +418,7 @@ class Scraper:
                     self.logger.error(f"Failed to read file: {fw_path}")
                     continue
 
-                # Ensure this loop iterates at a minimum of self.min_wait_s seconds
-                delta_t = (datetime.datetime.now() - last_dl).total_seconds()
-                if delta_t < self.min_wait_s:
-                    time.sleep(self.min_wait_s - delta_t)
-                last_dl = datetime.datetime.now()
+                last_dl = self._throttle(last_dl)
 
                 if not self.dry_run:
                     _fs_wrote = False

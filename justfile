@@ -34,3 +34,7 @@ test-server *args:
 # Run the ephemeral, RAM-backed MongoDB used by the tests (Ctrl+C to stop)
 test-mongo *args:
     docker compose -f tests/docker-compose.yml up {{args}}
+
+# Start the database via docker compose
+database:
+    docker compose --env-file .env -f docker/docker-compose.yml up
