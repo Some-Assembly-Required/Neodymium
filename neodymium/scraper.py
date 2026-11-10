@@ -369,6 +369,7 @@ class Scraper:
 
                 if self.fs is not None:
                     self.fs.add(fw, fw_path)
+                    self._discard_temp_file(fw_path)
 
                 if not self.dm.find_duplicate(fw):
                     self.dm.add_firmware(fw)
@@ -388,6 +389,10 @@ class Scraper:
         if delta_t < self.min_wait_s:
             time.sleep(self.min_wait_s - delta_t)
         return datetime.datetime.now()
+
+    def _discard_temp_file(self, path: str) -> None:
+        with contextlib.suppress(OSError):
+            os.remove(path)
 
     def run(self, dry_run: bool = False) -> Generator[ScrapeYield, None, None]:
         self.logger.info(f"Starting {self.__class__.__name__} Scraper")
@@ -417,6 +422,7 @@ class Scraper:
                         and fw.calc_file_metadata(fw_path)
                     ):
                         self.fs.add(fw, fw_path)
+                        self._discard_temp_file(fw_path)
                     continue
 
                 if not fw.calc_file_metadata(fw_path):
@@ -453,6 +459,8 @@ class Scraper:
                 self.logger.info(f"Downloaded: {str(fw)}")
                 yield fw, fw_path
                 count += 1
+                if self.fs is not None and not self.dry_run:
+                    self._discard_temp_file(fw_path)
 
         end_time = datetime.datetime.now() - start_time
         self.running = False
