@@ -83,7 +83,7 @@ class DatabaseManager:
         )
 
         if existing:
-            self.logger.warning(f"Duplicate entry for {firmware_metadata}")
+            self.logger.debug(f"Duplicate entry for {firmware_metadata}")
             return True
 
         return False
