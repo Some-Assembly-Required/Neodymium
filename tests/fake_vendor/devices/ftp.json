@@ -1,0 +1,53 @@
+{
+  "_comment": "Fake devices served over (S)FTP. The populator lays each one out as firmware/<vendor>/<product>/<version>/ containing the firmware file plus a metadata.json sidecar that the FTP scraper parses. Unlike the /basic/ site there is no HTML and no per-device auth: an FTP login gates the whole tree.",
+  "devices": [
+    {
+      "vendor": "Acme Networks",
+      "product": "AcmeRouter 3000",
+      "version": "1.0.0",
+      "hw_rev": "v2",
+      "region": "Global",
+      "upload_date": "2024-01-15",
+      "filename": "acme-3000-v1.0.0.bin",
+      "description": "Public router firmware distributed over FTP.",
+      "tags": ["Router"],
+      "extra": {"channel": "stable"},
+      "content": "ACME-3000 FIRMWARE v1.0.0 :: ftp payload"
+    },
+    {
+      "vendor": "Beacon Systems",
+      "product": "BeaconAP X1",
+      "version": "2.3.1",
+      "hw_rev": "rev-c",
+      "region": "US",
+      "upload_date": "2024-03-02",
+      "filename": "beacon-x1-2.3.1.img",
+      "description": "Access point firmware image.",
+      "tags": ["Access Point"],
+      "content": "BEACON-X1 FIRMWARE v2.3.1 :: ftp payload"
+    },
+    {
+      "vendor": "Cobalt Devices",
+      "product": "CobaltModem 500",
+      "version": "4.0.7",
+      "region": "EU",
+      "upload_date": "2024-05-20",
+      "filename": "cobalt-500-4.0.7.fw",
+      "description": "Modem firmware with a larger payload.",
+      "tags": ["Modem"],
+      "size_bytes": 8192
+    },
+    {
+      "vendor": "Delta IoT",
+      "product": "DeltaCam 7",
+      "version": "0.9.12",
+      "hw_rev": "A1",
+      "region": "Global",
+      "upload_date": "2024-07-08",
+      "filename": "deltacam7-0.9.12.bin",
+      "description": "Camera firmware nested several directories deep.",
+      "tags": ["Camera", "IoT"],
+      "size_bytes": 4096
+    }
+  ]
+}

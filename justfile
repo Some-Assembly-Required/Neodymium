@@ -44,7 +44,12 @@ test-server *args:
 # Run the ephemeral, RAM-backed MongoDB used by the tests (Ctrl+C to stop)
 [group('testing')]
 test-mongo *args:
-    docker compose -f tests/docker-compose.yml up {{args}}
+    docker compose -f tests/docker-compose.yml up mongodb {{args}}
+
+# Run the test FTP server (populate tests/ftp_root first, then `up ftp`)
+[group('testing')]
+test-ftp *args:
+    docker compose -f tests/docker-compose.yml up ftp {{args}}
 
 # --- deployment ---
 

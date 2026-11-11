@@ -26,3 +26,28 @@ services:
       timeout: 5s
       retries: 20
       start_period: 5s
+
+  # Standard FTP server (pure-ftpd) used by the FTP scraper tests. Its data
+  # directory is a bind mount populated from a device-definition JSON before the
+  # container starts (see tests/fake_vendor/ftp + tests/conftest.py), mirroring
+  # how the fake-vendor webserver is populated.
+  #
+  # Passive mode: the daemon advertises 127.0.0.1 (PUBLICHOST) and a fixed
+  # passive port range, which must be published 1:1 so the client can reach the
+  # data connections on the host.
+  ftp:
+    image: stilliard/pure-ftpd:hardened
+    # No restart policy: a throwaway test fixture, not a service.
+    environment:
+      PUBLICHOST: "127.0.0.1"
+      FTP_USER_NAME: firmware
+      FTP_USER_PASS: firmware
+      FTP_USER_HOME: /home/firmware
+      FTP_PASSIVE_PORTS: "30000:30009"
+    ports:
+      - "2121:21"
+      - "30000-30009:30000-30009"
+    volumes:
+      # Populated on the host before `up`. The scrapers only ever read; the
+      # daemon leaves ownership untouched, so teardown can clean it up.
+      - ./ftp_root:/home/firmware

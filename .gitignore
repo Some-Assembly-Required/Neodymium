@@ -3,6 +3,8 @@
 CLAUDE.md
 .claude/
 docker/mongodb_data/
+# Populated from JSON at test time and bind-mounted into the FTP test server.
+tests/ftp_root/
 .env
 *.egg-info/
 output/

@@ -29,6 +29,9 @@ dev = [
     # Test framework and the fake-vendor fixture server.
     "pytest",
     "flask",
+    # SFTP backend for neodymium.ftp + the in-process SFTP fixture server
+    # (plain FTP/FTPS needs nothing extra).
+    "paramiko",
     # Builds the wheel (see the `build` just recipe).
     "build",
 ]
@@ -66,4 +69,9 @@ ignore = ["E501"]
 # coloredlogs ships no type stubs and has no package on typeshed.
 [[tool.mypy.overrides]]
 module = "coloredlogs"
+ignore_missing_imports = true
+
+# paramiko (optional SFTP backend) ships no type stubs on typeshed.
+[[tool.mypy.overrides]]
+module = "paramiko"
 ignore_missing_imports = true
