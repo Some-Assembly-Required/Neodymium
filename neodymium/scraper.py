@@ -108,7 +108,12 @@ class Scraper:
         if (not ok_400 and res.status_code // 100 == 4) or (
             not ok_500 and res.status_code // 100 == 5
         ):
-            res.raise_for_status()
+            try:
+                res.raise_for_status()
+            except requests.exceptions.HTTPError:
+                if logger:
+                    logger.warning(f"Request Failed - Status Code: {res.status_code}")
+                return None
 
         if logger:
             logger.info(f"Downloading: {url}")
